@@ -1,0 +1,4 @@
+numpy
+click
+h5py
+mediapy
