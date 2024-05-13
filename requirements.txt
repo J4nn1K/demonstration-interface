@@ -2,3 +2,6 @@ numpy
 click
 h5py
 mediapy
+pyopengl
+spatialmath-python
+ipympl
