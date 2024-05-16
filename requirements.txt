@@ -5,3 +5,4 @@ mediapy
 pyopengl
 spatialmath-python
 ipympl
+pyserial
