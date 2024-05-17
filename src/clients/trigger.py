@@ -6,14 +6,16 @@ from numpy import interp
 
 log = logging.getLogger(__name__)
 
+
 class TriggerClient:
     '''
     Client that exposes a trigger state. 
     The state is calculated using AD-converted sensor readings from an Arduino. 
+    (Is looking for FT232R USB UART by default)
     '''
-    def __init__(self, comport=None):            
+    def __init__(self, comport=None, description='FT232R USB UART'):            
         self.calibrated = False
-        self.open_serial(comport)
+        self.open_serial(comport, description)
 
 
     def get_trigger_state(self):
@@ -54,19 +56,19 @@ class TriggerClient:
             log.warn(f'Non-integer value received: {line}')
 
 
-    def open_serial(self, comport, baudrate=9600):
+    def open_serial(self, comport, description, baudrate=9600):
         if comport==None:    
-            log.info('Scanning comports for FT232R USB UART')
+            log.info(f'Scanning comports for {description}')
             ports = serial.tools.list_ports.comports()
 
             for port, desc, _ in sorted(ports):
                 log.debug(f'{port}: {desc}')
-                if 'FT232R USB UART' in desc:
-                    log.info(f'Found FT232R USB UART at {port}')
+                if description in desc:
+                    log.info(f'Found {description} at {port}')
                     comport = port
             
             if comport==None:
-                raise Exception('No comport found for FT232R USB UART. Is your Arduino connected?')
+                raise Exception(f'No comport found for {description}. Is your Arduino connected?')
         else:
             log.info(f'Comport specified as {comport}')
 
@@ -74,14 +76,17 @@ class TriggerClient:
             self.ser = serial.Serial(comport, baudrate, timeout=1)
             time.sleep(2) 
         
-            log.info(f'Connected to FT232R USB UART at {comport}')
+            log.info(f'Connected to {description} at {comport}')
         else:
-            raise Exception('No comport defined for FT232R USB UART') 
+            raise Exception(f'No comport defined for {description}') 
     
 
     def read_serial(self):
-        return self.ser.readline().decode().rstrip()
+        line = self.ser.readline().decode().rstrip()
+        log.debug(line)
+        return line
         
 
     def close_serial(self):
         self.ser.close()
+        log.info(f'Connection closed')
