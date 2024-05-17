@@ -1,7 +1,10 @@
 # demonstration-interface
+## Development
+Install the package in "editable" mode. This creates a symbolic link from the site-package directory to your development directory, allowing for direct changes.
 ```
-pip install .
+pip install -e .
 ```
+
 
 When working in ARM-based architectures (Jetson etc.) install HDF5 manually because h5py will try to build from source. Because there's no pre-built package for ARM computers yet.
 
