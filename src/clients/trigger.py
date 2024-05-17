@@ -8,35 +8,13 @@ log = logging.getLogger(__name__)
 
 class TriggerClient:
     '''
-    Client that exposes sensor readings of an Arduino. 
+    Client that exposes a trigger state. 
+    The state is calculated using AD-converted sensor readings from an Arduino. 
     '''
-    def __init__(self, comport=None ,baudrate=9600):
-            
+    def __init__(self, comport=None):            
         self.calibrated = False
+        self.open_serial(comport)
 
-        if comport==None:    
-            log.info('Scanning comports for FT232R USB UART')
-            ports = serial.tools.list_ports.comports()
-
-            for port, desc, _ in sorted(ports):
-                log.debug(f'{port}: {desc}')
-                if 'FT232R USB UART' in desc:
-                    log.info(f'Found FT232R USB UART at {port}')
-                    comport = port
-            
-            if comport==None:
-                raise Exception('No comport found for FT232R USB UART. Is your Arduino connected?')
-        else:
-            log.info(f'Comport specified as {comport}')
-
-        if comport:
-            self.ser = serial.Serial(comport, baudrate, timeout=1)
-            time.sleep(2) 
-        
-            log.info(f'Connected to FT232R USB UART at {comport}')
-        else:
-            raise Exception('No comport defined for FT232R USB UART') 
-        
 
     def get_trigger_state(self):
         '''
@@ -75,6 +53,31 @@ class TriggerClient:
         except ValueError:
             log.warn(f'Non-integer value received: {line}')
 
+
+    def open_serial(self, comport, baudrate=9600):
+        if comport==None:    
+            log.info('Scanning comports for FT232R USB UART')
+            ports = serial.tools.list_ports.comports()
+
+            for port, desc, _ in sorted(ports):
+                log.debug(f'{port}: {desc}')
+                if 'FT232R USB UART' in desc:
+                    log.info(f'Found FT232R USB UART at {port}')
+                    comport = port
+            
+            if comport==None:
+                raise Exception('No comport found for FT232R USB UART. Is your Arduino connected?')
+        else:
+            log.info(f'Comport specified as {comport}')
+
+        if comport:
+            self.ser = serial.Serial(comport, baudrate, timeout=1)
+            time.sleep(2) 
+        
+            log.info(f'Connected to FT232R USB UART at {comport}')
+        else:
+            raise Exception('No comport defined for FT232R USB UART') 
+    
 
     def read_serial(self):
         return self.ser.readline().decode().rstrip()
