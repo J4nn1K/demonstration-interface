@@ -26,6 +26,8 @@ class TriggerClient:
             value = self.get_adc_value()
             if value:
                 return interp(value, [self.min_value, self.max_value], [0,1])
+            else:
+                log.warn(f'No value received')
                 
         else:
             raise Exception('Trigger is not calibrated')
