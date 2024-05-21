@@ -179,7 +179,7 @@ class Robotiq2FingerGripper:
         self._max_force = 100.0  # [%]
 
     def shutdown(self):
-        self.client.close()
+        self.client.disconnectFromDevice()
 
     def activate_gripper(self):
         self.rACT = 1
