@@ -16,7 +16,8 @@ def main():
                 sys.stdout.write("[%-100s] %d%%" % ('='*int(100*state), int(100*state)))
                 sys.stdout.flush()
                 # print(f'{state}')
-    finally:
+    except KeyboardInterrupt:
+        print('\n')
         trigger.close_serial()
 
 
