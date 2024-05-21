@@ -38,7 +38,7 @@ class Trigger:
         self.max_value = 0
         
         t_end = time.time() + seconds
-        log.info(f'Please actuate the full range of the trigger')
+        log.info(f'Please actuate the full range of the trigger for {seconds} seconds to calibrate.')
         while time.time() < t_end:
             value = self.get_adc_value()
             if value:
@@ -81,8 +81,16 @@ class Trigger:
                 self.ser = serial.Serial(comport, baudrate, timeout=1)
                 log.info(f'Connected to {description} at {comport}')
                 log.info(f'Reading initial lines to clear buffer')
-                for i in range(25):
-                    self.ser.readline()
+                
+                
+                for i in range(100):
+                    _ = self.ser.readline()
+
+                # if not data:
+                #     log.warn(f'No data received. Retrying connection')
+                #     self.ser.close()
+                #     time.sleep(1)
+                #     self.open_serial(comport, description, baudrate)
 
             except serial.SerialException as e:
                 log.error(e)
