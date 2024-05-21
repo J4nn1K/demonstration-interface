@@ -25,7 +25,7 @@ class Trigger:
         if self.calibrated:
             value = self.get_adc_value()
             if value:
-                return interp(value, [self.min_value, self.max_value], [0,1])
+                return float(interp(value, [self.min_value, self.max_value], [0,1]))
             else:
                 log.warn(f'No value received')
                 
@@ -49,13 +49,15 @@ class Trigger:
         log.info(f'Calibrated trigger with: min_value={self.min_value}, max_value={self.max_value}')
     
 
-    def get_adc_value(self):
+    def get_adc_value(self):    
         line = self.read_serial()
         try:
             value = int(line)
             return value
-        except ValueError:
+        except ValueError as e:
             log.warn(f'Non-integer value received: {line}')
+        except TypeError as e:
+            log.warn(f'Non-integer type received: {type(line)}')
 
 
     def open_serial(self, comport, description, baudrate=9600):
@@ -75,18 +77,26 @@ class Trigger:
             log.info(f'Comport specified as {comport}')
 
         if comport:
-            self.ser = serial.Serial(comport, baudrate, timeout=1)
-            time.sleep(2) 
-        
-            log.info(f'Connected to {description} at {comport}')
+            try:
+                self.ser = serial.Serial(comport, baudrate, timeout=1)
+                log.info(f'Connected to {description} at {comport}')
+                log.info(f'Reading initial lines to clear buffer')
+                for i in range(25):
+                    self.ser.readline()
+
+            except serial.SerialException as e:
+                log.error(e)
         else:
             raise Exception(f'No comport defined for {description}') 
     
 
     def read_serial(self):
-        line = self.ser.readline().decode().rstrip()
-        log.debug(line)
-        return line
+        try:
+            line = self.ser.readline().decode().rstrip()
+            log.debug(line)
+            return line
+        except UnicodeDecodeError as e:
+            log.error(e)
         
 
     def close_serial(self):
