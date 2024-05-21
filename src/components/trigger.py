@@ -7,7 +7,7 @@ from numpy import interp
 log = logging.getLogger(__name__)
 
 
-class TriggerClient:
+class Trigger:
     '''
     Client that exposes a trigger state. 
     The state is calculated using AD-converted sensor readings from an Arduino. 

@@ -2,12 +2,12 @@ import logging
 import time
 import serial
 import serial.tools.list_ports
-from src.clients.third_party.robotiq_2finger_gripper import Robotiq2FingerGripper
+from src.components.third_party.robotiq_2finger_gripper import Robotiq2FingerGripper
 
 log = logging.getLogger(__name__)
 
 
-class GripperClient:
+class Gripper:
     '''
     tbd
     '''
