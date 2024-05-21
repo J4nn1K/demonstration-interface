@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 class Trigger:
     '''
-    Client that exposes a trigger state. 
+    Class that exposes abstract trigger functionality.
     The state is calculated using AD-converted sensor readings from an Arduino. 
     (Is looking for FT232R USB UART by default)
     '''
@@ -60,7 +60,7 @@ class Trigger:
             log.warn(f'Non-integer type received: {type(line)}')
 
 
-    def open_serial(self, comport, description, baudrate=9600):
+    def open_serial(self, comport, description, baudrate=115200):
         if comport==None:    
             log.info(f'Scanning comports for {description}')
             ports = serial.tools.list_ports.comports()
