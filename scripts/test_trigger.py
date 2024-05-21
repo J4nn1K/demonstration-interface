@@ -1,17 +1,21 @@
-from src.clients.trigger import TriggerClient
+from src.components.trigger import Trigger
 import logging
+import sys
 
 logging.basicConfig(level=logging.INFO)
 
 def main():
-    trigger = TriggerClient()
+    trigger = Trigger()
     trigger.calibrate()
 
     try:
         while True:
             state = trigger.get_trigger_state()
             if state: 
-                print(f'{state:.2f}')
+                sys.stdout.write('\r')
+                sys.stdout.write("[%-100s] %d%%" % ('='*int(100*state), int(100*state)))
+                sys.stdout.flush()
+                # print(f'{state}')
     finally:
         trigger.close_serial()
 
