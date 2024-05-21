@@ -56,9 +56,10 @@ class Trigger:
 
     def get_filtered_adc_value(self):
         raw_value = self.get_adc_value()
-        filtered_value = self.alpha * raw_value + (1 - self.alpha) * self.prev_filtered_value
-        self.prev_filtered_value = filtered_value
-        return filtered_value
+        if raw_value:
+            filtered_value = self.alpha * raw_value + (1 - self.alpha) * self.prev_filtered_value
+            self.prev_filtered_value = filtered_value
+            return filtered_value
 
 
     def get_adc_value(self):    
@@ -93,8 +94,7 @@ class Trigger:
                 self.ser = serial.Serial(comport, baudrate, timeout=1)
                 log.info(f'Connected to {description} at {comport}')
                 log.info(f'Reading initial lines to clear buffer')
-                
-                
+
                 for i in range(100):
                     _ = self.ser.readline()
 
@@ -120,5 +120,7 @@ class Trigger:
         
 
     def close_serial(self):
+        self.ser.reset_input_buffer()
+        self.ser.reset_output_buffer()
         self.ser.close()
         log.info(f'Connection closed')
