@@ -4,5 +4,5 @@ void setup() {
 
 void loop() {
   Serial.println(analogRead(A7));
-  delay(10); // 100 Hz read
+  delay(1); // 100 Hz read
 }
