@@ -38,6 +38,7 @@ class Trigger:
 
     
     def calibrate(self, seconds=5):
+        # Assuming a 10-bit ADC
         self.min_value = 1023
         self.max_value = 0
         
