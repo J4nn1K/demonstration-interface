@@ -13,17 +13,21 @@ class Trigger:
     The state is calculated using AD-converted sensor readings from an Arduino. 
     (Is looking for FT232R USB UART by default)
     '''
-    def __init__(self, comport=None, description='FT232R USB UART'):            
+    def __init__(self, comport=None, description='FT232R USB UART', alpha=0.1):            
         self.calibrated = False
         self.open_serial(comport, description)
-
+        
+        # Filter parameters for a simple low-pass filter
+        self.prev_filtered_value = 0
+        self.alpha = alpha
 
     def get_trigger_state(self):
         '''
         Returns the trigger state on a range of [0,1].
         '''
         if self.calibrated:
-            value = self.get_adc_value()
+            #value = self.get_adc_value()
+            value = self.get_filtered_adc_value()
             if value:
                 return float(interp(value, [self.min_value, self.max_value], [0,1]))
             else:
@@ -48,6 +52,13 @@ class Trigger:
         self.calibrated = True
         log.info(f'Calibrated trigger with: min_value={self.min_value}, max_value={self.max_value}')
     
+
+    def get_filtered_adc_value(self):
+        raw_value = self.get_adc_value()
+        filtered_value = self.alpha * raw_value + (1 - self.alpha) * self.prev_filtered_value
+        self.prev_filtered_value = filtered_value
+        return filtered_value
+
 
     def get_adc_value(self):    
         line = self.read_serial()
