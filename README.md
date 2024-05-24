@@ -17,7 +17,8 @@ When working in ARM-based architectures (Jetson etc.) install HDF5 manually beca
 Install Libcanberra for cv2 visualization
 
 ## Flask Streaming Server
+Running the server and making it publicly available on your network:
 ```
-export FLASK_APP=servers/camera_feed.py
-flask run --host=0.0.0.0
+export FLASK_APP=servers/camera_feed/app.py
+flask run --host=0.0.0.0 
 ```

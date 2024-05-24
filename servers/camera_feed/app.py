@@ -10,6 +10,7 @@ app = Flask(__name__)
 
 cam = Camera()
 
+
 def get_frame():
     while True:
         cam.grab_frame()
@@ -22,7 +23,12 @@ def get_frame():
 
 
 @app.route('/')
-def vid():
+def index():
+    return render_template('index.html')
+
+
+@app.route('/video')
+def video():
     return Response(get_frame(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
