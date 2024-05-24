@@ -93,10 +93,14 @@ class Trigger:
             try:
                 self.ser = serial.Serial(comport, baudrate, timeout=1)
                 log.info(f'Connected to {description} at {comport}')
-                log.info(f'Reading initial lines to clear buffer')
-
-                for i in range(100):
-                    _ = self.ser.readline()
+                self.ser.reset_input_buffer()
+                time.sleep(1)
+                if self.ser.in_waiting > 0:
+                    log.info(f'Reading initial lines to clear buffer')
+                    for i in range(10):
+                        _ = self.ser.readline()
+                else:
+                    raise Exception('No bytes received.')
 
                 # if not data:
                 #     log.warn(f'No data received. Retrying connection')
