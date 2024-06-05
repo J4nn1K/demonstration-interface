@@ -10,13 +10,12 @@ def main():
     try:
         while True:
             grip.get_data()
-            trigger_state = grip.get_trigger_state()
-            
-            if trigger_state: 
+            button_state = grip.get_button_state()
+            if not button_state == None: 
                 sys.stdout.write('\r')
-                sys.stdout.write("[%-100s] %d%%" % ('='*trigger_state, trigger_state))
+                sys.stdout.write(f"{button_state}")
                 sys.stdout.flush()
-
+    
     except KeyboardInterrupt:
         print('\n')
         grip.close_serial()
