@@ -18,7 +18,7 @@ class Grip:
         self.button_state = 0   # int {0,1}
         
         self.open_serial(comport, description)
-        input("Please actuate the full range of the trigger and confirm")
+        input("### Please actuate the full range of the trigger and confirm ###")
 
 
     def get_trigger_state(self):
@@ -36,7 +36,7 @@ class Grip:
         try:
             self.trigger_state = int(trigger_state)
             self.button_state = int(button_state)
-            # return trigger_state, button_state
+            return True
         
         except ValueError as e:
             log.warn(f'Non-integer value received: {line}')
@@ -88,14 +88,16 @@ class Grip:
     def read_serial(self):
         try:
             line = self.ser.readline().decode().rstrip()
-            log.debug(line)
+            log.debug("Serial read line: "+line)
             return line
         except UnicodeDecodeError as e:
             log.error(e)
-        
+            
 
     def close_serial(self):
+        log.info(f'Closing serial connection')
         self.ser.reset_input_buffer()
         self.ser.reset_output_buffer()
         self.ser.close()
+        time.sleep(2) # time to reset buffer
         log.info(f'Connection closed')
