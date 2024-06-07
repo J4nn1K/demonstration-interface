@@ -26,15 +26,15 @@ class Gripper:
 
     def go_to(self, position):
         '''
-        Go to position: 0=OPEN 1=CLOSED
+        Go to position: 0=OPEN 100=CLOSED
         '''
-        self.gripper.goto(pos=position, vel=1.0, force=1.0)
+        self.gripper.goto(pos=position/100, vel=1.0, force=1.0)
         self.gripper.sendCommand()
 
 
     def get_position(self):
         if self.gripper.getStatus():
-            return self.gripper.get_pos()
+            return self.gripper.get_pos() * 100
 
 
     def activate(self):
