@@ -10,8 +10,11 @@ log = logging.getLogger()
 log.setLevel(logging.INFO)
 logging.info("INFO")
 
+# Frequencies for thread execution loops
 logging_dt = 0.02
+control_dt = 0.02
 
+# Global variables to store and read values
 lock = threading.Lock()
 trigger_state = None
 button_state = None
@@ -30,7 +33,7 @@ def read_grip(grip):
                 button_state = grip.get_button_state()
                 
 
-def read_tracker(tracker):
+def read_tracker(tracker, dt=0.1):
     global pose
     global pose_confidence
     
@@ -41,8 +44,17 @@ def read_tracker(tracker):
                 pose = _pose
                 pose_confidence = _confidence
         
-        time.sleep(0.01) # otherwise this threads locks the global variables
+        time.sleep(dt) # otherwise this threads locks the global variables
 
+
+def send_to_gripper(gripper, dt):
+    global trigger_state
+    while True: 
+      with lock:
+        if trigger_state:
+          gripper.go_to(trigger_state)
+      
+      time.sleep(dt)
 
 
 def log_data(dt):
@@ -70,6 +82,9 @@ def main():
   tracker = Tracker()
   tracker.enable_tracking()
   
+  gripper = Gripper()
+  gripper.activate()
+  
   try:
         log.info('Starting thread for grip')
         grip_thread = threading.Thread(target=read_grip, args=(grip,), daemon=True)
@@ -79,18 +94,24 @@ def main():
         tracker_thread = threading.Thread(target=read_tracker, args=(tracker,), daemon=True)
         tracker_thread.start()
         
+        log.info('Starting thread for gripper')
+        gripper_thread = threading.Thread(target=send_to_gripper, args=(gripper, control_dt), daemon=True)
+        gripper_thread.start()
+        
         log.info('Starting thread for logging')
         logger_thread = threading.Thread(target=log_data, args=(logging_dt,), daemon=True)
         logger_thread.start()
 
         grip_thread.join()
         tracker_thread.join()
+        gripper_thread.join()
         logger_thread.join()
     
   except KeyboardInterrupt:
         # tracker.close()
         print('\n')
         grip.close_serial()
+        gripper.gripper.shutdown()
 
 
 if __name__ == '__main__':
