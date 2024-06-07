@@ -31,15 +31,15 @@ class Grip:
 
     def get_data(self):    
         line = self.read_serial()
-        trigger_state, button_state = line.split(',')
         
         try:
+            trigger_state, button_state = line.split(',')
             self.trigger_state = int(trigger_state)
             self.button_state = int(button_state)
             return True
         
         except ValueError as e:
-            log.warn(f'Non-integer value received: {line}')
+            log.warn(f'False value received: {line}')
         except TypeError as e:
             log.warn(f'Non-integer type received: {type(line)}')
 
