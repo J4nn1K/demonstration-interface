@@ -32,7 +32,7 @@ class Tracker:
   def enable_tracking(self):
     log.info('Enabling positional tracking')
     py_transform = sl.Transform()  # First create a Transform object for TrackingParameters object
-    tracking_parameters = sl.PositionalTrackingParameters(_init_pos=py_transform)
+    tracking_parameters = sl.PositionalTrackingParameters(_init_pos=py_transform, _set_gravity_as_origin=False)
     err = self.zed.enable_positional_tracking(tracking_parameters)
     if err != sl.ERROR_CODE.SUCCESS:
       print("Enable positional tracking : "+repr(err)+". Exit program.")
