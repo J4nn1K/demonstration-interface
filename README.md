@@ -17,9 +17,9 @@ Install Libcanberra for cv2 visualization
 ### RealSense SDK on Jetson
 [Convenience script from JetsonHacks](https://jetsonhacks.com/2019/12/22/install-realsense-camera-in-5-minutes-jetson-nano/)
 
-## Flask Streaming Server
+## Flask Web Viewer
 Running the server and making it publicly available on your network:
 ```
-export FLASK_APP=servers/camera_feed/app.py
+export FLASK_APP=web_viewer/app.py
 flask run --host=0.0.0.0 
 ```
