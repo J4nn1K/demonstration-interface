@@ -1,26 +1,36 @@
 <html>
-  <head>
-    <title>Camera Stream</title>
-    <style>
-      * {
-          margin: 0;
-          padding: 0;
-      }
-      .imgbox {
-          display: grid;
-          height: 100%;
-      }
-      .center-fit {
-          max-width: 100%;
-          max-height: 100vh;
-          margin: auto;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- <h1>Camera Stream</h1> -->
-    <div class="imgbox">
-      <img class="center-fit" src='/video'>
-    </div>
-  </body>
+
+<head>
+  <title>Camera Stream</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 32px;
+    }
+    h1 {
+      font-weight: 400;
+    }
+    h2 {
+      font-weight: 400;
+    }
+
+    .imgbox {
+      display: grid;
+      height: 100%;
+    }
+    .center-fit {
+      max-width: 100%;
+      max-height: 100vh;
+      margin: auto;
+    }
+  </style>
+</head>
+
+<body>
+  <h1><b>DI</b> WebViewer</h1>
+  <h2>RealSense Camera Stream</h2>
+  <img class="center-fit" src='/video'>
+</body>
+
 </html>
