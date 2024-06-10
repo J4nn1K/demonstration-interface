@@ -5,7 +5,6 @@ Install the package in "editable" mode. This creates a symbolic link from the si
 pip install -e .
 ```
 
-
 When working in ARM-based architectures (Jetson etc.) install HDF5 manually because h5py will try to build from source. Because there's no pre-built package for ARM computers yet.
 
 ```
@@ -13,8 +12,10 @@ When working in ARM-based architectures (Jetson etc.) install HDF5 manually beca
   pip install h5py
 ```
 
-
 Install Libcanberra for cv2 visualization
+
+### RealSense SDK on Jetson
+[Convenience script from JetsonHacks](https://jetsonhacks.com/2019/12/22/install-realsense-camera-in-5-minutes-jetson-nano/)
 
 ## Flask Streaming Server
 Running the server and making it publicly available on your network:
