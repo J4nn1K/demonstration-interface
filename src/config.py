@@ -20,6 +20,10 @@ ZED = {
     "depth_mode": sl.DEPTH_MODE.ULTRA,
 }
 
+GRIPPER = {
+    "control_frequency": 30  # Hz
+}
+
 
 # EE POSE (relative to ZED Coordinate System "IMAGE")
 R_x = np.array(
