@@ -170,9 +170,9 @@ def record_data(
                 latest_trigger_state = trigger_state.value
                 latest_pose_matrix = np.array(pose).reshape((4, 4))
                 latest_pose_confidence = pose_confidence.value
-                latest_color_image = np.frombuffer(
+                latest_color_image = np.copy(np.frombuffer(
                     color_image.get_obj(), dtype=np.uint8
-                ).reshape(480, 640, 3)
+                ).reshape(480, 640, 3))
                 
                 timestamps.append(timestamp)
                 images.append(latest_color_image)
