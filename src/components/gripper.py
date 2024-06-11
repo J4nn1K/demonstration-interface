@@ -20,7 +20,9 @@ class Gripper:
         if not self.gripper.init_success:
             raise Exception(f"Unable to open comport to {comport}")
         if not self.gripper.getStatus():
-            raise Exception(f"Failed to contact gripper on port {comport}... ABORTING")
+            log.error(f"Failed to contact gripper on port {comport}... ABORTING")
+            raise SystemExit
+            #raise Exception(f"Failed to contact gripper on port {comport}... ABORTING")
         
         log.info(f'Connected to {description} at {comport}')
 

@@ -70,7 +70,9 @@ class Grip:
                     for i in range(10):
                         _ = self.ser.readline()
                 else:
-                    raise Exception("No bytes received.")
+                    log.error(f"No bytes received... ABORTING")
+                    raise SystemExit
+                    # raise Exception("No bytes received.")
 
                 # if not data:
                 #     log.warn(f'No data received. Retrying connection')
