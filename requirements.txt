@@ -9,3 +9,4 @@ pyserial
 pymodbus==2.5.3
 Flask
 pyrealsense2
+opencv-python
