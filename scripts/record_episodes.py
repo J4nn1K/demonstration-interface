@@ -2,15 +2,16 @@ from src.components.grip import Grip
 from src.components.tracker import Tracker
 from src.components.gripper import Gripper
 from src.components.camera import Camera
-from src.config import REALSENSE, GRIPPER
+from src.config import REALSENSE, GRIPPER, RECORDER, DATA_DIR
 from src.utils import CustomFormatter
 
 import multiprocessing as mp
 import time
 import sys
 import numpy as np
-
 import logging
+import h5py
+from datetime import datetime
 
 # Logger and console handler
 log = logging.getLogger()
@@ -23,10 +24,12 @@ log.addHandler(console_handler)
 
 # Frequencies for process execution loops
 logging_dt = 1 / 30
+recording_dt = 1 / RECORDER["frequency"]
 control_dt = 1 / GRIPPER["control_frequency"]
 
 
 # Global variables to store and read values using Manager
+# TODO RENAME VARIABLES
 manager = mp.Manager()
 trigger_state = manager.Value("i", 0)
 button_state = manager.Value("i", 0)
@@ -97,15 +100,12 @@ def send_to_gripper(trigger_state, dt):
     while True:
         if trigger_state.value:
             gripper.go_to(trigger_state.value)
-        time.sleep(dt)
+        time.sleep(dt)  # TODO: Implement a better control loop
 
 
 def log_data(
     trigger_state, button_state, pose, pose_confidence, color_image, depth_image, dt
 ):
-    time.sleep(10)
-    log.info("Waited 10 seconds - Starting logging process")
-
     while True:
         try:
             pose_matrix = np.array(pose).reshape(4, 4)
@@ -125,33 +125,105 @@ def log_data(
         time.sleep(dt)
 
 
-def record_data(trigger_state, button_state, pose, pose_confidence, color_image, depth_image, dt):
-    pass
+def record_data(
+    trigger_state, button_state, pose, pose_confidence, color_image, depth_image, dt
+):
+    recording = False
+    prev_button_state = 0
+    
+    timestamps = []
+    images = []
+    poses = []
+
+    log.warning("### Press the button to start recording ###")
+
+    try:
+        while True:
+            start_time = time.time()
+            current_button_state = button_state.value
+
+            if prev_button_state == 0 and current_button_state == 1:
+                recording = not recording  # Toggle on button press
+
+                if recording:
+                    log.info("Started recording")
+                else:
+                    log.info("Stopped recording")
+
+                    session_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    with h5py.File(f"{DATA_DIR}/recording_{session_timestamp}.h5", "w") as f:
+                        f.create_dataset("timestamps", data=np.array(timestamps))
+                        f.create_dataset("images", data=np.array(images))
+                        f.create_dataset("poses", data=np.array(poses))
+                    log.warning(f"Saved recording_{session_timestamp}.h5")
+                    
+                    timestamps.clear()
+                    images.clear()
+                    poses.clear()
+
+            prev_button_state = current_button_state
+
+            if recording:                
+                timestamp = round(time.time() * 1000)
+                log.info(f"Recording frame {timestamp}")
+                
+                latest_trigger_state = trigger_state.value
+                latest_pose_matrix = np.array(pose).reshape((4, 4))
+                latest_pose_confidence = pose_confidence.value
+                latest_color_image = np.frombuffer(
+                    color_image.get_obj(), dtype=np.uint8
+                ).reshape(480, 640, 3)
+                
+                timestamps.append(timestamp)
+                images.append(latest_color_image)
+                poses.append(latest_pose_matrix)
+
+
+            elapsed_time = time.time() - start_time
+            sleep_time = dt - elapsed_time
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+            else:
+                log.warning(f"Recording loop took longer than {dt:.2} seconds: {elapsed_time:.2f}")
+
+    except KeyboardInterrupt:
+        print("Aborting recording...")
 
 
 def main():
     try:
-        log.info("Starting process for grip")
         grip_process = mp.Process(target=read_grip, args=(trigger_state, button_state))
         grip_process.start()
 
-        log.info("Starting process for tracker")
         tracker_process = mp.Process(target=read_tracker, args=(pose, pose_confidence))
         tracker_process.start()
 
-        log.info("Starting process for camera")
         camera_process = mp.Process(target=read_camera, args=(color_image, depth_image))
         camera_process.start()
 
-        log.info("Starting process for gripper")
         gripper_process = mp.Process(
             target=send_to_gripper, args=(trigger_state, control_dt)
         )
         gripper_process.start()
 
-        log.info("Starting process for logging")
-        logger_process = mp.Process(
-            target=log_data,
+        time.sleep(8)
+
+        # logger_process = mp.Process(
+        #     target=log_data,
+        #     args=(
+        #         trigger_state,
+        #         button_state,
+        #         pose,
+        #         pose_confidence,
+        #         color_image,
+        #         depth_image,
+        #         logging_dt,
+        #     ),
+        # )
+        # logger_process.start()
+
+        recorder = mp.Process(
+            target=record_data,
             args=(
                 trigger_state,
                 button_state,
@@ -159,18 +231,17 @@ def main():
                 pose_confidence,
                 color_image,
                 depth_image,
-                logging_dt,
+                recording_dt,
             ),
         )
-        logger_process.start()
+        recorder.start()
 
         grip_process.join()
         tracker_process.join()
         camera_process.join()
         gripper_process.join()
-        logger_process.join()
-
-        button_state
+        # logger_process.join()
+        recorder.join()
 
     except KeyboardInterrupt:
         print("\n Closing")

@@ -1,7 +1,12 @@
 import pyzed.sl as sl
 import numpy as np
 
-DATA_DIR = "<put your data dir here>"
+DATA_DIR = "/home/jannik/Repos/demonstration-interface/data"
+
+RECORDER = {    
+    "frequency": 30, # Hz
+    "batch_size": 20,
+}
 
 REALSENSE = {
     "color_width": 640,
@@ -21,7 +26,7 @@ ZED = {
 }
 
 GRIPPER = {
-    "control_frequency": 30  # Hz
+    "control_frequency": 30 # Hz
 }
 
 
