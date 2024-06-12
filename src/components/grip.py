@@ -28,13 +28,16 @@ class Grip:
         return self.button_state
 
     def get_data(self):
+        '''
+        Returns timestamp if new data is received, otherwise None
+        '''
         line = self.read_serial()
 
         try:
             trigger_state, button_state = line.split(",")
             self.trigger_state = int(trigger_state)
             self.button_state = int(button_state)
-            return True
+            return round(time.time() * 1000)
 
         except ValueError as e:
             log.warn(f"False value received: {line}")
