@@ -21,7 +21,7 @@ ZED = {
     "resolution": sl.RESOLUTION.AUTO,
     "fps": 30,
     "coordinate_system": sl.COORDINATE_SYSTEM.IMAGE,
-    "units": sl.UNIT.MILLIMETER,
+    "units": sl.UNIT.METER,
     "depth_mode": sl.DEPTH_MODE.ULTRA,
 }
 
