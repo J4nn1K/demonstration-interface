@@ -31,12 +31,16 @@ control_dt = 1 / GRIPPER["control_frequency"]
 # Global variables to store and read values using Manager
 # TODO RENAME VARIABLES
 manager = mp.Manager()
+
+trigger_timestamp = manager.Value("i", 0)
 trigger_state = manager.Value("i", 0)
 button_state = manager.Value("i", 0)
 
+pose_timestamp = manager.Value("i", 0)
 pose = manager.Array("d", [0.0] * 16)  # 4x4 matrix stored in a flat list
 pose_confidence = manager.Value("i", 0)
 
+image_timestamp = manager.Value("i", 0)
 color_image = mp.Array(
     "B", REALSENSE["color_width"] * REALSENSE["color_height"] * 3
 )  # 3 channels (RGB) and 8-bit depth
@@ -49,12 +53,14 @@ def read_grip(trigger_state, button_state):
     grip = Grip()
 
     while True:
-        if grip.get_data():
+        _timestamp = grip.get_data()
+        if _timestamp:
             _trigger_state = grip.get_trigger_state()
             _button_state = grip.get_button_state()
             trigger_state.value = _trigger_state
             button_state.value = _button_state
-
+            trigger_timestamp.value = _timestamp
+            
 
 def read_tracker(pose, pose_confidence):
     tracker = Tracker()
@@ -62,7 +68,7 @@ def read_tracker(pose, pose_confidence):
 
     while True:
         if tracker.grab_frame():
-            _, _confidence, _pose = tracker.get_ee_pose()
+            _pose_timestamp, _confidence, _pose = tracker.get_ee_pose()
             pose_confidence.value = _confidence
             # collapse 4x4 pose matrix into a flat list
             for i in range(len(_pose.flatten())):
@@ -79,7 +85,7 @@ def read_camera(color_image, depth_image):
 
         if (color is None) or (depth is None):
             continue
-
+        
         # Create a np array view of the shared memory
         np_color = np.frombuffer(color_image.get_obj(), dtype=np.uint8).reshape(
             480, 640, 3
@@ -91,8 +97,10 @@ def read_camera(color_image, depth_image):
             480, 640
         )
         np.copyto(np_depth, depth)
-
-
+        
+        image_timestamp.value = round(time.time() * 1000)
+        
+        
 def send_to_gripper(trigger_state, dt):
     gripper = Gripper()
     gripper.activate()
@@ -132,8 +140,14 @@ def record_data(
     prev_button_state = 0
     
     timestamps = []
-    images = []
-    poses = []
+    trigger_timestamps = []
+    trigger_states = []
+    image_timestamps = []
+    color_images = []
+    depth_images = []
+    pose_timestamps = []
+    pose_values = []
+    pose_confidences = []
 
     log.warning("### Press the button to start recording ###")
 
@@ -152,33 +166,72 @@ def record_data(
 
                     session_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                     with h5py.File(f"{DATA_DIR}/recording_{session_timestamp}.h5", "w") as f:
+                        
                         f.create_dataset("timestamps", data=np.array(timestamps))
-                        f.create_dataset("images", data=np.array(images))
-                        f.create_dataset("poses", data=np.array(poses))
+                        
+                        f.create_dataset("trigger_timestamps", data=np.array(trigger_timestamps))
+                        f.create_dataset("trigger_states", data=np.array(trigger_states))
+                        
+                        f.create_dataset("image_timestamps", data=np.array(image_timestamps))
+                        f.create_dataset("color_images", data=np.array(color_images))
+                        f.create_dataset("depth_images", data=np.array(depth_images))
+                        
+                        f.create_dataset("pose_timestamps", data=np.array(pose_timestamps))
+                        f.create_dataset("pose_values", data=np.array(pose_values))
+                        f.create_dataset("pose_confidences", data=np.array(pose_confidences))
+                        
                     log.warning(f"Saved recording_{session_timestamp}.h5")
                     
                     timestamps.clear()
-                    images.clear()
-                    poses.clear()
+                    trigger_timestamps.clear()
+                    trigger_states.clear()
+                    image_timestamps.clear()
+                    color_images.clear()
+                    depth_images.clear()
+                    pose_timestamps.clear()
+                    pose_values.clear()
+                    pose_confidences.clear()
+                    
 
             prev_button_state = current_button_state
 
-            if recording:                
+            if recording:    
+                # Retrieve values            
                 timestamp = round(time.time() * 1000)
+                timestamps.append(timestamp)
                 log.info(f"Recording frame {timestamp}")
+
                 
+                latest_trigger_timestamp = trigger_timestamp.value
                 latest_trigger_state = trigger_state.value
+                
+                latest_pose_timestep = pose_timestamp.value
                 latest_pose_matrix = np.array(pose).reshape((4, 4))
                 latest_pose_confidence = pose_confidence.value
+                
+                latest_image_timestamp = image_timestamp.value
                 latest_color_image = np.copy(np.frombuffer(
                     color_image.get_obj(), dtype=np.uint8
                 ).reshape(480, 640, 3))
+                latest_depth_image = np.copy(np.frombuffer(
+                    depth_image.get_obj(), dtype=np.uint16
+                ).reshape(480, 640))
                 
+                # Append values
                 timestamps.append(timestamp)
-                images.append(latest_color_image)
-                poses.append(latest_pose_matrix)
 
-
+                trigger_timestamps.append(latest_trigger_timestamp)
+                trigger_states.append(latest_trigger_state)
+                
+                image_timestamps.append(latest_image_timestamp)
+                color_images.append(latest_color_image)
+                depth_images.append(latest_depth_image)
+                
+                pose_timestamps.append(latest_pose_timestep)
+                pose_values.append(latest_pose_matrix)
+                pose_confidences.append(latest_pose_confidence)
+            
+            
             elapsed_time = time.time() - start_time
             sleep_time = dt - elapsed_time
             if sleep_time > 0:
