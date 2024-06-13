@@ -4,8 +4,7 @@ import numpy as np
 DATA_DIR = "/home/jannik/Repos/demonstration-interface/data"
 
 RECORDER = {    
-    "frequency": 30, # Hz
-    "batch_size": 20,
+    "frequency": 30 # Hz
 }
 
 REALSENSE = {
