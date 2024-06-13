@@ -206,7 +206,7 @@ def record_data(
 
             if recording:    
                 # Retrieve values            
-                timestamp = round(time.time() * 1000)
+                timestamp = time.time_ns() # round(time.time() * 1000)
                 log.info(f"Recording frame {timestamp}")
 
                 
