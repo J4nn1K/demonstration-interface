@@ -11,6 +11,7 @@ import sys
 import numpy as np
 import logging
 import h5py
+import os
 from datetime import datetime
 
 # Logger and console handler
@@ -32,19 +33,19 @@ control_dt = 1 / GRIPPER["control_frequency"]
 # TODO RENAME VARIABLES
 manager = mp.Manager()
 
-trigger_timestamp = manager.Value("i", 0)
-trigger_state = manager.Value("i", 0)
-button_state = manager.Value("i", 0)
+trigger_timestamp = manager.Value("Q", 0)   # uint64
+trigger_state = manager.Value("B", 0)       # uint8
+button_state = manager.Value("B", 0)        # uint8
 
-pose_timestamp = manager.Value("i", 0)
-pose = manager.Array("d", [0.0] * 16)  # 4x4 matrix stored in a flat list
-pose_confidence = manager.Value("i", 0)
+pose_timestamp = manager.Value("Q", 0)      # uint64
+pose = manager.Array("d", [0.0] * 16)       # 4x4 matrix stored in a flat list
+pose_confidence = manager.Value("B", 0)     # uint8
 
-image_timestamp = manager.Value("i", 0)
-color_image = mp.Array(
+image_timestamp = manager.Value("Q", 0)     # uint64
+color_image = mp.Array(                     # uint8
     "B", REALSENSE["color_width"] * REALSENSE["color_height"] * 3
-)  # 3 channels (RGB) and 8-bit depth
-depth_image = mp.Array(
+)  # 3 channels (RGB) and 8-bit depth 
+depth_image = mp.Array(                     # uint16
     "H", REALSENSE["depth_width"] * REALSENSE["depth_height"]
 )  # 16-bit depth
 
@@ -68,6 +69,7 @@ def read_tracker(pose, pose_confidence):
 
     while True:
         if tracker.grab_frame():
+            # _pose_timestamp, _confidence, _pose = tracker.get_pose_in_ee_frame()
             _pose_timestamp, _confidence, _pose = tracker.get_ee_pose()
             pose_confidence.value = _confidence
             # collapse 4x4 pose matrix into a flat list
@@ -139,6 +141,11 @@ def record_data(
     recording = False
     prev_button_state = 0
     
+    session_dir = os.path.join(DATA_DIR, "session_"+datetime.now().strftime("%Y%m%d_%H%M%S"))
+    os.makedirs(session_dir, exist_ok=True)
+    
+    log.warning("### Press the button to start recording ###")
+
     timestamps = []
     trigger_timestamps = []
     trigger_states = []
@@ -149,7 +156,6 @@ def record_data(
     pose_values = []
     pose_confidences = []
 
-    log.warning("### Press the button to start recording ###")
 
     try:
         while True:
@@ -161,26 +167,29 @@ def record_data(
 
                 if recording:
                     log.info("Started recording")
+                    initial_pose = np.array(pose).reshape((4, 4))
+                    initial_pose_inv = np.linalg.inv(initial_pose)
+
                 else:
                     log.info("Stopped recording")
 
-                    session_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    with h5py.File(f"{DATA_DIR}/recording_{session_timestamp}.h5", "w") as f:
+                    episode_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    with h5py.File(f"{session_dir}/episode_{episode_timestamp}.h5", "w") as f:
                         
-                        f.create_dataset("timestamps", data=np.array(timestamps))
+                        f.create_dataset("timestamps", data=np.array(timestamps), dtype='uint64')
                         
-                        f.create_dataset("trigger_timestamps", data=np.array(trigger_timestamps))
-                        f.create_dataset("trigger_states", data=np.array(trigger_states))
+                        f.create_dataset("trigger_timestamps", data=np.array(trigger_timestamps), dtype='uint64')
+                        f.create_dataset("trigger_states", data=np.array(trigger_states), dtype='uint8')
                         
-                        f.create_dataset("image_timestamps", data=np.array(image_timestamps))
-                        f.create_dataset("color_images", data=np.array(color_images))
-                        f.create_dataset("depth_images", data=np.array(depth_images))
+                        f.create_dataset("image_timestamps", data=np.array(image_timestamps), dtype='uint64')
+                        f.create_dataset("color_images", data=np.array(color_images), dtype='uint8')
+                        f.create_dataset("depth_images", data=np.array(depth_images), dtype='uint16')
                         
-                        f.create_dataset("pose_timestamps", data=np.array(pose_timestamps))
-                        f.create_dataset("pose_values", data=np.array(pose_values))
-                        f.create_dataset("pose_confidences", data=np.array(pose_confidences))
+                        f.create_dataset("pose_timestamps", data=np.array(pose_timestamps), dtype='uint64')
+                        f.create_dataset("pose_values", data=np.array(pose_values), dtype='float64')
+                        f.create_dataset("pose_confidences", data=np.array(pose_confidences), dtype='uint8')
                         
-                    log.warning(f"Saved recording_{session_timestamp}.h5")
+                    log.warning(f"Saved recording_{episode_timestamp}.h5")
                     
                     timestamps.clear()
                     trigger_timestamps.clear()
@@ -198,7 +207,6 @@ def record_data(
             if recording:    
                 # Retrieve values            
                 timestamp = round(time.time() * 1000)
-                timestamps.append(timestamp)
                 log.info(f"Recording frame {timestamp}")
 
                 
@@ -207,6 +215,10 @@ def record_data(
                 
                 latest_pose_timestep = pose_timestamp.value
                 latest_pose_matrix = np.array(pose).reshape((4, 4))
+                # Poses recorded are relative to the initial pose
+                if initial_pose is not None:
+                    relative_pose_matrix = initial_pose_inv @ latest_pose_matrix
+                
                 latest_pose_confidence = pose_confidence.value
                 
                 latest_image_timestamp = image_timestamp.value
@@ -228,7 +240,8 @@ def record_data(
                 depth_images.append(latest_depth_image)
                 
                 pose_timestamps.append(latest_pose_timestep)
-                pose_values.append(latest_pose_matrix)
+                pose_values.append(relative_pose_matrix)
+                # pose_values.append(latest_pose_matrix)
                 pose_confidences.append(latest_pose_confidence)
             
             
