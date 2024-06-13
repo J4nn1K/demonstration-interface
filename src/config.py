@@ -30,7 +30,7 @@ GRIPPER = {
 }
 
 
-# EE POSE (relative to ZED Coordinate System "IMAGE")
+# ZED POSE IN EE/WORLD FRAME ####
 R_x = np.array(
     [
         [1, 0, 0],
@@ -46,9 +46,24 @@ translation = np.array([25, 0, -72])
 transformation = np.eye(4)
 transformation[:3,:3] = rotation
 # transformation[:3,3] = translation # not needed yet, requires other init frame for ZED 
+######
 
-EE_TRANSFORMATION = {
+### ZED POSE TO EE POSE (IN EE/WORLD FRAME)
+T_x = np.array(
+    [
+        [1, 0, 0, 0],
+        [0, -np.sqrt(2) / 2, np.sqrt(2) / 2, 0],
+        [0, -np.sqrt(2) / 2, -np.sqrt(2) / 2, 0],
+        [0, 0, 0, 1],
+    ]
+)
+
+T_y = np.array([[0, 0, 1, 0], [0, 1, 0, 0], [-1, 0, 0, 0], [0, 0, 0, 1]])
+
+
+TRANSFORMATIONS = {
     "R_x": R_x,
     "R_y": R_y,
-    "from_ZED": transformation
+    "ZED_in_EE_frame": transformation,
+    "ZED_to_EE": np.dot(T_x, T_y),
 }

@@ -1,7 +1,7 @@
 import logging
 import pyzed.sl as sl
 import numpy as np
-from src.config import ZED, EE_TRANSFORMATION
+from src.config import ZED, TRANSFORMATIONS
 
 log = logging.getLogger(__name__)
 
@@ -57,11 +57,15 @@ class Tracker:
         return timestamp, image.get_data(deep_copy=True)
 
     def get_ee_pose(self):
+        timestamp, confidence, pose = self.get_pose_in_ee_frame()
+        return timestamp, confidence, np.dot(pose, TRANSFORMATIONS["ZED_to_EE"])
+
+    def get_pose_in_ee_frame(self):
         """
         Same as get_pose() but returns pose transformed into EE frame.
         """
         timestamp, confidence, pose = self.get_pose()
-        return timestamp, confidence, np.dot(EE_TRANSFORMATION["from_ZED"], pose)
+        return timestamp, confidence, np.dot(TRANSFORMATIONS["ZED_in_EE_frame"], pose)
         
 
     def get_pose(self):
