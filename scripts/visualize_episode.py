@@ -8,25 +8,51 @@ import glob
 import cv2
 from tqdm import tqdm
 from src.utils import set_axes_equal
+import click
 
-input_file_path = "/home/jannik/Repos/demonstration-interface/data/session_20240613_135615/episode_20240613_135623.h5"
-episode_name = os.path.splitext(os.path.basename(input_file_path))[0]
 
-output_file_path = f'{episode_name}.mp4'
-f = h5py.File(input_file_path,'r')
+@click.command()
+@click.option('-f', '--file_path', required=True, help='Absolute path to the episode file.')
+def main(file_path):
+    episode_name = os.path.splitext(os.path.basename(file_path))[0]
+    output_dir = os.path.dirname(file_path)
+    output_file_path = os.path.join(output_dir, f'{episode_name}.mp4')
+    f = h5py.File(file_path,'r')
 
+
+    timestamps = np.array(f["timestamps"])
+
+    color_images = np.array(f['color_images'])
+    color_images = np.array([cv2.cvtColor(image, cv2.COLOR_BGR2RGB) for image in color_images])
+
+    poses = np.array(f['pose_values'])
+    pose_confidences = np.array(f['pose_confidences'])
+
+    translations = np.array([pose[:3, 3] for pose in poses])
+    orientations = np.array([pose[:3, :3] for pose in poses])
     
-timestamps = np.array(f["timestamps"])
+    # Create figure and axis for plotting
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
-color_images = np.array(f['color_images'])
-color_images = np.array([cv2.cvtColor(image, cv2.COLOR_BGR2RGB) for image in color_images])
+    # Initialize video writer
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for mp4
+    frame_height = fig.canvas.get_width_height()[1]
+    frame_width = fig.canvas.get_width_height()[0] * 2  # double the width to accommodate both images
+    out = cv2.VideoWriter(output_file_path, fourcc, 30.0, (frame_width, frame_height))
 
-poses = np.array(f['pose_values'])
-pose_confidences = np.array(f['pose_confidences'])
+    # Generate and save frames
+    print("Generating video...")
+    for i in tqdm(range(len(translations))):
+        color_image = color_images[i]
+        frame = create_frame(fig, ax, translations, orientations, color_image, i)
+        out.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))  # Convert RGB to BGR for OpenCV
 
-translations = np.array([pose[:3, 3] for pose in poses])
-orientations = np.array([pose[:3, :3] for pose in poses])
+    # Release the video writer
+    out.release()
+    plt.close(fig)
 
+    print(f"Video saved as {output_file_path}")
 
 def create_frame(fig, ax, translations, orientations, color_image, frame_idx):
     ax.cla()  # Clear the previous frame
@@ -48,7 +74,7 @@ def create_frame(fig, ax, translations, orientations, color_image, frame_idx):
     ax.set_zlabel('Z')
 
     ax.grid(True)
-    ax.view_init(elev=-70, azim=-45, roll=-45)
+    ax.view_init(elev=-30, azim=-90, roll=0)
     
     set_axes_equal(ax)
 
@@ -66,25 +92,5 @@ def create_frame(fig, ax, translations, orientations, color_image, frame_idx):
 
     return combined_frame
 
-# Create figure and axis for plotting
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-
-# Initialize video writer
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for mp4
-frame_height = fig.canvas.get_width_height()[1]
-frame_width = fig.canvas.get_width_height()[0] * 2  # double the width to accommodate both images
-out = cv2.VideoWriter(output_file_path, fourcc, 30.0, (frame_width, frame_height))
-
-# Generate and save frames
-print("Generating video...")
-for i in tqdm(range(len(translations))):
-    color_image = color_images[i]
-    frame = create_frame(fig, ax, translations, orientations, color_image, i)
-    out.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))  # Convert RGB to BGR for OpenCV
-
-# Release the video writer
-out.release()
-plt.close(fig)
-
-print(f"Video saved as {output_file_path}")
+if __name__ == '__main__':
+    main()
