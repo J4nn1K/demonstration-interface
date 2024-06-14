@@ -7,7 +7,7 @@ from src.components.tracker import Tracker
 from src.components.camera import Camera
 
 
-type = "ZED" 
+type = "RealSense" 
 
 app = Flask(__name__)
 
