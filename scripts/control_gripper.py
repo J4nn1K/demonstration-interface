@@ -1,5 +1,6 @@
 from src.components.gripper import Gripper
 from src.components.grip import Grip
+from src.config import GRIPPER
 import threading
 
 import time
@@ -10,7 +11,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logging.info("INFO")
 
-control_dt = 0.02
+control_dt = 1 / GRIPPER["control_frequency"]
 
 
 lock = threading.Lock()
