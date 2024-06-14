@@ -22,10 +22,11 @@ ZED = {
     "coordinate_system": sl.COORDINATE_SYSTEM.IMAGE,
     "units": sl.UNIT.METER,
     "depth_mode": sl.DEPTH_MODE.ULTRA,
+    "pose_smooting": True,
 }
 
 GRIPPER = {
-    "control_frequency": 30 # Hz
+    "control_frequency": 50 # Hz
 }
 
 

@@ -37,7 +37,7 @@ class Tracker:
             sl.Transform()
         )  # First create a Transform object for TrackingParameters object
         tracking_parameters = sl.PositionalTrackingParameters(
-            _init_pos=py_transform, _set_gravity_as_origin=False
+            _init_pos=py_transform, _set_gravity_as_origin=False, _enable_pose_smoothing=ZED["pose_smooting"]
         )
         err = self.zed.enable_positional_tracking(tracking_parameters)
         if err != sl.ERROR_CODE.SUCCESS:
