@@ -26,14 +26,18 @@ def get_frame():
             cam.wait_for_frames()
             image = cam.get_image()  
             depth = cam.get_depth()
-        
+            
+            max_depth = 0.6 # meters
+            max_depth_bit = 10000*max_depth
+            depth[depth>max_depth_bit] = max_depth_bit
+            
             # Convert depth to 8-bit and BGR for OpenCV
-            depth_image_8bit = cv2.normalize(depth, None, 0, 255, cv2.NORM_MINMAX)
-            depth_image_8bit = np.uint8(depth_image_8bit)
-            depth_colormap = cv2.applyColorMap(depth_image_8bit, cv2.COLORMAP_TURBO)
-            depth_bgr = cv2.cvtColor(depth_colormap, cv2.COLOR_RGB2BGR)
+            depth_image_normalized = cv2.normalize(depth, None, 0, 255, cv2.NORM_MINMAX)
+            depth_image_8bit = np.uint8(depth_image_normalized)
+            depth_colormap = cv2.applyColorMap(depth_image_8bit, cv2.COLORMAP_JET)
+            # depth_bgr = cv2.cvtColor(depth_colormap, cv2.COLOR_RGB2BGR)
 
-            imgencode=cv2.imencode('.jpg',np.hstack((image, depth_bgr)))[1]
+            imgencode=cv2.imencode('.jpg',np.hstack((image, depth_colormap)))[1]
         elif type == "ZED":
             cam.grab_frame()
             _, image = cam.get_image()
