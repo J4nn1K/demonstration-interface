@@ -108,9 +108,16 @@ def send_to_gripper(trigger_state, dt):
     gripper.activate()
 
     while True:
+        start_time = time.time()
         if trigger_state.value:
             gripper.go_to(trigger_state.value)
-        time.sleep(dt)  # TODO: Implement a better control loop
+        
+        elapsed_time = time.time() - start_time
+        sleep_time = dt - elapsed_time
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+        else:
+            log.warning(f"Gripper control loop took longer than {dt:.2} seconds: {elapsed_time:.2f}")
 
 
 def log_data(
