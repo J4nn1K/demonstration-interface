@@ -26,7 +26,7 @@ ZED = {
 }
 
 GRIPPER = {
-    "control_frequency": 50 # Hz
+    "control_frequency": 30 # Hz
 }
 
 

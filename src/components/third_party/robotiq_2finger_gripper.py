@@ -240,8 +240,8 @@ class Robotiq2FingerGripper:
 
     def get_pos(self):
         po = float(self.gPO)
-        # return po
-        return np.clip(1-(1.0 / (3.0 - 250.0) * (po - 250.0)), 0, 1)
+        return np.interp(po, [3, 230], [0, 1])
+        # return np.clip(1.0 / (3.0 - 250.0) * (po - 250.0))
         # return np.clip(self.stroke / (3.0 - 230.0) * (po - 230.0), 0, self.stroke)
 
     def get_req_pos(self):

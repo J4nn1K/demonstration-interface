@@ -37,7 +37,7 @@ class Grip:
             trigger_state, button_state = line.split(",")
             self.trigger_state = int(trigger_state)
             self.button_state = int(button_state)
-            return round(time.time() * 1000)
+            return time.time_ns()
 
         except ValueError as e:
             log.warn(f"False value received: {line}")
@@ -73,7 +73,7 @@ class Grip:
                     for i in range(10):
                         _ = self.ser.readline()
                 else:
-                    log.error(f"No bytes received... ABORTING")
+                    log.error(f"No bytes received from Arduino... ABORTING")
                     raise SystemExit
                     # raise Exception("No bytes received.")
 

@@ -34,9 +34,9 @@ class Gripper:
         self.gripper.sendCommand()
 
 
-    def get_position(self):
+    def get_state(self):
         if self.gripper.getStatus():
-            return self.gripper.get_pos() * 100
+            return self.gripper.get_pos()
 
 
     def activate(self):
