@@ -275,6 +275,8 @@ def record_data(
                     pose_timestamps.clear()
                     pose_values.clear()
                     pose_confidences.clear()
+                    
+                    log.warning("### Press the button to start recording ###")
 
             prev_button_state = current_button_state
 
