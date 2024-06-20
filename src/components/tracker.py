@@ -58,13 +58,18 @@ class Tracker:
 
     def get_ee_pose(self):
         timestamp, confidence, pose = self.get_pose_in_ee_frame()
-        return timestamp, confidence, np.dot(pose, TRANSFORMATIONS["ZED_to_EE"])
+        
+        rotated = np.dot(pose, TRANSFORMATIONS["ZED_to_EE"])
+        translated = np.dot(rotated, TRANSFORMATIONS["ZED_to_EE"])
+
+        return timestamp, confidence, translated
 
     def get_pose_in_ee_frame(self):
         """
         Same as get_pose() but returns pose transformed into EE frame.
         """
         timestamp, confidence, pose = self.get_pose()
+                
         return timestamp, confidence, np.dot(TRANSFORMATIONS["ZED_in_EE_frame"], pose)
         
 

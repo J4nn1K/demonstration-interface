@@ -66,4 +66,5 @@ TRANSFORMATIONS = {
     "R_y": R_y,
     "ZED_in_EE_frame": transformation,
     "ZED_to_EE": np.dot(T_x, T_y),
+    "ZED_to_EE_translation": np.array([[1,0,0,-0.7071*0.061],[0,1,0,0.7071*0.061],[0,0,1,0.02],[0,0,0,1]])
 }
