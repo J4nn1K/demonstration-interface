@@ -36,7 +36,7 @@ class Gripper:
 
     def get_state(self):
         if self.gripper.getStatus():
-            return self.gripper.get_pos()
+            return self.gripper.get_pos()*100
 
 
     def activate(self):
