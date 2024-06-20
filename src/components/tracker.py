@@ -60,7 +60,7 @@ class Tracker:
         timestamp, confidence, pose = self.get_pose_in_ee_frame()
         
         rotated = np.dot(pose, TRANSFORMATIONS["ZED_to_EE"])
-        translated = np.dot(TRANSFORMATIONS["ZED_to_EE"], rotated)
+        translated = np.dot(rotated, TRANSFORMATIONS["ZED_to_EE_translation"])
 
         return timestamp, confidence, translated
 
