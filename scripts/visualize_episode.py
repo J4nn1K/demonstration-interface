@@ -2,6 +2,8 @@ from src.config import DATA_DIR
 import h5py
 import numpy as np
 np.set_printoptions(precision=3, suppress=True)
+import matplotlib 
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import os
 import glob
@@ -19,9 +21,6 @@ def main(file_path):
     output_file_path = os.path.join(output_dir, f'{episode_name}.mp4')
     f = h5py.File(file_path,'r')
 
-
-    timestamps = np.array(f["timestamps"])
-
     color_images = np.array(f['color_images'])
     color_images = np.array([cv2.cvtColor(image, cv2.COLOR_BGR2RGB) for image in color_images])
 
@@ -32,6 +31,7 @@ def main(file_path):
     orientations = np.array([pose[:3, :3] for pose in poses])
     
     # Create figure and axis for plotting
+    
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
@@ -79,10 +79,12 @@ def create_frame(fig, ax, translations, orientations, color_image, frame_idx):
     set_axes_equal(ax)
 
     fig.canvas.draw()
+    # plt.show()
 
     # Convert the plot to a numpy array
-    trajectory_frame = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-    trajectory_frame = trajectory_frame.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    trajectory_frame = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
+    trajectory_frame = trajectory_frame.reshape(fig.canvas.get_width_height()[::-1] + (4,))[:, :, :3]
+
 
     # Resize color image to match the height of the trajectory plot
     color_image_resized = cv2.resize(color_image, (trajectory_frame.shape[1], trajectory_frame.shape[0]))
