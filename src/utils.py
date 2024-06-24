@@ -122,4 +122,63 @@ def set_axes_equal(ax):
     ax.set_ylim3d([y_middle - plot_radius, y_middle + plot_radius])
     ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
 
+#############################
+# FOR EXPERIMENT EVALUATION #
+############################# 
 
+def compute_transformation_matrix(estimated_poses, ground_truth_poses):
+    assert estimated_poses.shape == ground_truth_poses.shape
+    N = estimated_poses.shape[0]
+
+    # Extract translation components
+    t_estimated = estimated_poses[:, :3, 3]
+    t_ground_truth = ground_truth_poses[:, :3, 3]
+
+    # Extract rotation components
+    R_estimated = estimated_poses[:, :3, :3]
+    R_ground_truth = ground_truth_poses[:, :3, :3]
+
+    # Compute centroids
+    centroid_t_estimated = np.mean(t_estimated, axis=0)
+    centroid_t_ground_truth = np.mean(t_ground_truth, axis=0)
+
+    # Center the data
+    t_estimated_centered = t_estimated - centroid_t_estimated
+    t_ground_truth_centered = t_ground_truth - centroid_t_ground_truth
+
+    # Compute H matrix
+    H = t_estimated_centered.T @ t_ground_truth_centered
+
+    # SVD
+    U, S, Vt = np.linalg.svd(H)
+    R_optimal = Vt.T @ U.T
+
+    if np.linalg.det(R_optimal) < 0:
+        Vt[-1, :] *= -1
+        R_optimal = Vt.T @ U.T
+
+    t_optimal = centroid_t_ground_truth - R_optimal @ centroid_t_estimated
+
+    return R_optimal, t_optimal
+
+def apply_transformation(estimated_poses, R_optimal, t_optimal):
+    N = estimated_poses.shape[0]
+    transformed_poses = np.zeros_like(estimated_poses)
+    
+    for i in range(N):
+        # Apply rotation
+        transformed_poses[i, :3, :3] = R_optimal @ estimated_poses[i, :3, :3]
+        # Apply translation
+        transformed_poses[i, :3, 3] = R_optimal @ estimated_poses[i, :3, 3] + t_optimal
+        # Homogeneous component remains 1
+        transformed_poses[i, 3, 3] = 1.0
+
+    return transformed_poses
+
+def compute_ate(estimated_poses, ground_truth_poses):
+    # Calculate the Euclidean distance between corresponding positions
+    differences = estimated_poses[:, :3, 3] - ground_truth_poses[:, :3, 3]
+    squared_differences = np.square(differences)
+    sum_squared_differences = np.sum(squared_differences, axis=1)
+    ate = np.sqrt(sum_squared_differences).mean()
+    return ate
