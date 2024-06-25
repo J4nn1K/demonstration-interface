@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 import pandas as pd
+from scipy.interpolate import interp1d
 
 
 class CustomFormatter(logging.Formatter):
@@ -182,3 +183,10 @@ def compute_ate(estimated_poses, ground_truth_poses):
     sum_squared_differences = np.sum(squared_differences, axis=1)
     ate = np.sqrt(sum_squared_differences).mean()
     return ate
+
+
+def interpolate_to_percentage(data, num_points=101):
+    current_indices = np.linspace(0, len(data) - 1, num=len(data))
+    target_indices = np.linspace(0, len(data) - 1, num=num_points)
+    interpolation_function = interp1d(current_indices, data, axis=0)
+    return interpolation_function(target_indices)
