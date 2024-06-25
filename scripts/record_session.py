@@ -47,6 +47,8 @@ pose_confidence = manager.Value("B", 0)  # uint8
 if RECORDER["tracking_image"]:
     if ZED["resolution"] == sl.RESOLUTION.HD720:
         tracker_image = mp.Array("B", 1280 * 720 * 4)
+else: 
+    tracker_image = None
 
 image_timestamp = manager.Value("Q", 0)  # uint64
 color_image = mp.Array(  # uint8 
