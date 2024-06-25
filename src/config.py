@@ -4,7 +4,8 @@ import numpy as np
 DATA_DIR = "/home/jannik/Repos/demonstration-interface/data"
 
 RECORDER = {    
-    "frequency": 30 # Hz
+    "frequency": 30, # Hz
+    "tracking_image": True,
 }
 
 REALSENSE = {
@@ -17,11 +18,11 @@ REALSENSE = {
 }
 
 ZED = {
-    "resolution": sl.RESOLUTION.AUTO,
-    "fps": 30,
+    "resolution": sl.RESOLUTION.HD720,
+    "fps": 60,
     "coordinate_system": sl.COORDINATE_SYSTEM.IMAGE,
     "units": sl.UNIT.METER,
-    "depth_mode": sl.DEPTH_MODE.ULTRA,
+    "depth_mode": sl.DEPTH_MODE.PERFORMANCE,
     "pose_smooting": True,
 }
 

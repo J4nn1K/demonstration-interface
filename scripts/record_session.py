@@ -2,9 +2,10 @@ from src.components.grip import Grip
 from src.components.tracker import Tracker
 from src.components.gripper import Gripper
 from src.components.camera import Camera
-from src.config import REALSENSE, GRIPPER, RECORDER, DATA_DIR
+from src.config import REALSENSE, GRIPPER, RECORDER, DATA_DIR, ZED
 from src.utils import CustomFormatter
 
+import pyzed.sl as sl
 import multiprocessing as mp
 import time
 import sys
@@ -43,8 +44,12 @@ pose_timestamp = manager.Value("Q", 0)  # uint64
 pose = manager.Array("d", [0.0] * 16)  # 4x4 matrix stored in a flat list
 pose_confidence = manager.Value("B", 0)  # uint8
 
+if RECORDER["tracking_image"]:
+    if ZED["resolution"] == sl.RESOLUTION.HD720:
+        tracker_image = mp.Array("B", 1280 * 720 * 4)
+
 image_timestamp = manager.Value("Q", 0)  # uint64
-color_image = mp.Array(  # uint8
+color_image = mp.Array(  # uint8 
     "B", REALSENSE["color_width"] * REALSENSE["color_height"] * 3
 )  # 3 channels (RGB) and 8-bit depth
 depth_image = mp.Array(  # uint16
@@ -65,19 +70,38 @@ def read_grip(trigger_timestamp, trigger_state, button_state):
             button_state.value = _button_state
 
 
-def read_tracker(pose_timestamp, pose_confidence, pose):
+def read_tracker(pose_timestamp, pose_confidence, pose, tracker_image):
     tracker = Tracker()
     tracker.enable_tracking()
-
+    dt = 1/ZED["fps"]
+    
     while True:
+        start_time = time.time()
         if tracker.grab_frame():
             # _pose_timestamp, _confidence, _pose = tracker.get_pose_in_ee_frame()
             _pose_timestamp, _confidence, _pose = tracker.get_ee_pose()
+
             pose_timestamp.value = _pose_timestamp
             pose_confidence.value = _confidence
             # collapse 4x4 pose matrix into a flat list
             for i in range(len(_pose.flatten())):
                 pose[i] = _pose.flatten()[i]
+
+            if RECORDER["tracking_image"]:
+                _, image = tracker.get_image()
+                np_tracker = np.frombuffer(tracker_image.get_obj(), dtype=np.uint8).reshape(
+                    720,1280,4
+                )
+                np.copyto(np_tracker, image)
+        
+        elapsed_time = time.time() - start_time
+        sleep_time = dt - elapsed_time
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+        else:
+            log.debug(
+                f"Tracker loop took longer than {dt:.4} seconds: {elapsed_time:.4f}"
+            )
 
 
 def read_camera(image_timestamp, color_image, depth_image):
@@ -127,7 +151,7 @@ def send_to_gripper(trigger_state, gripper_timestamp, gripper_state, dt):
         if sleep_time > 0:
             time.sleep(sleep_time)
         else:
-            log.warning(
+            log.debug(
                 f"Gripper control loop took longer than {dt:.4} seconds: {elapsed_time:.4f}"
             )
 
@@ -164,6 +188,7 @@ def record_data(
     pose_timestamp,
     pose,
     pose_confidence,
+    tracker_image,
     dt,
 ):
 
@@ -188,6 +213,7 @@ def record_data(
     pose_timestamps = []
     pose_values = []
     pose_confidences = []
+    tracker_images = []
 
     try:
         while True:
@@ -261,6 +287,13 @@ def record_data(
                             data=np.array(pose_confidences),
                             dtype="uint8",
                         )
+                        
+                        if RECORDER["tracking_image"]:
+                            f.create_dataset(
+                                "tracker_images",
+                                data=np.array(tracker_images),
+                                dtype="uint8",
+                            )
 
                     log.warning(f"Saved recording_{episode_timestamp}.h5")
 
@@ -275,7 +308,8 @@ def record_data(
                     pose_timestamps.clear()
                     pose_values.clear()
                     pose_confidences.clear()
-                    
+                    tracker_images.clear()
+
                     log.warning("### Press the button to start recording ###")
 
             prev_button_state = current_button_state
@@ -311,6 +345,15 @@ def record_data(
                     )
                 )
 
+                if RECORDER["tracking_image"]:
+                    latest_tracker_image = np.copy(
+                        np.frombuffer(tracker_image.get_obj(), dtype=np.uint8).reshape(
+                            720,1280,4
+                        )
+                    )
+                    tracker_images.append(latest_tracker_image)
+                    
+
                 # Append values
                 timestamps.append(timestamp)
 
@@ -328,6 +371,7 @@ def record_data(
                 pose_values.append(relative_pose_matrix)
                 # pose_values.append(latest_pose_matrix)
                 pose_confidences.append(latest_pose_confidence)
+
 
             elapsed_time = time.time() - start_time
             sleep_time = dt - elapsed_time
@@ -350,7 +394,8 @@ def main():
         grip_process.start()
 
         tracker_process = mp.Process(
-            target=read_tracker, args=(pose_timestamp, pose_confidence, pose)
+            target=read_tracker,
+            args=(pose_timestamp, pose_confidence, pose, tracker_image),
         )
         tracker_process.start()
 
@@ -387,6 +432,7 @@ def main():
                 pose_timestamp,
                 pose,
                 pose_confidence,
+                tracker_image,
                 recording_dt,
             ),
         )
