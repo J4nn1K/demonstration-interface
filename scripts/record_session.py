@@ -221,7 +221,23 @@ def record_data(
         while True:
             start_time = time.time()
             current_button_state = button_state.value
+            
+            def get_color(value):
+                if value >= 80:
+                    return '\033[92m'  # Green
+                elif value >= 60:
+                    return '\033[93m'  # Yellow
+                else:
+                    return '\033[91m'  # Red
+                
+            latest_pose_confidence = pose_confidence.value
 
+            color = get_color(latest_pose_confidence)
+            
+            sys.stdout.write('\r')
+            sys.stdout.write(f"{color}##### Pose Confidence: {latest_pose_confidence:2.0f} ######\033[0m")
+            sys.stdout.flush()
+            
             if prev_button_state == 0 and current_button_state == 1:
                 recording = not recording  # Toggle on button press
 
@@ -319,7 +335,7 @@ def record_data(
             if recording:
                 # Retrieve values
                 timestamp = time.time_ns()  # round(time.time() * 1000)
-                log.info(f"Recording frame {timestamp}")
+                # log.info(f"Recording frame {timestamp}")
 
                 latest_trigger_timestamp = trigger_timestamp.value
                 latest_trigger_state = trigger_state.value
@@ -333,7 +349,7 @@ def record_data(
                 if initial_pose is not None:
                     relative_pose_matrix = initial_pose_inv @ latest_pose_matrix
 
-                latest_pose_confidence = pose_confidence.value
+
 
                 latest_image_timestamp = image_timestamp.value
                 latest_color_image = np.copy(
@@ -380,7 +396,7 @@ def record_data(
             if sleep_time > 0:
                 time.sleep(sleep_time)
             else:
-                log.warning(
+                log.debug(
                     f"Recording loop took longer than {dt:.2} seconds: {elapsed_time:.2f}"
                 )
 
