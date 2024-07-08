@@ -13,3 +13,6 @@ opencv-python
 ipympl 
 tqdm
 pandas
+tikzplotlib
+webcolors==1.13
+matplotlib==3.6.0
