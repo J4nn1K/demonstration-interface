@@ -1,4 +1,6 @@
-# demonstration-interface
+# Demonstration Interface
+![](https://github.com/J4nn1K/demonstration-interface/blob/main/media/graphic.png)
+
 ## Basic Setup
 Configuration can be found in `src/config.py`
 
