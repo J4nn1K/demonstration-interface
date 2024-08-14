@@ -1,4 +1,9 @@
 # Demonstration Interface
+[[Report]](https://j4nn1k.github.io/files/project-thesis.pdf)
+[[Presentation]](https://j4nn1k.github.io/files/project-thesis-presentation.pdf)
+[[Recording]](https://tuhh.zoom.us/rec/share/pju8XqW6G1aIv9oTgVGfVPGh34XNoj046tR5MkbUG2UK8-LYGyPob0T9BeEbcrff.ZSf-vTTM7_S86hv_)
+
+
 ![](https://github.com/J4nn1K/demonstration-interface/blob/main/media/graphic.png)
 
 ## Basic Setup
